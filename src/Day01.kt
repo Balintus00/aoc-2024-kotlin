@@ -1,21 +1,48 @@
+import kotlin.io.path.Path
+import kotlin.io.path.forEachLine
+import kotlin.math.absoluteValue
+
 fun main() {
-    fun part1(input: List<String>): Int {
-        return input.size
+    val leftList = mutableListOf<Int>()
+    val rightList = mutableListOf<Int>()
+    val listDelimiter = "   "
+
+    Path("src/Day01.txt").forEachLine { line ->
+        val linePairedLocationIds = line.split(listDelimiter)
+        leftList += linePairedLocationIds.first().toInt()
+        rightList += linePairedLocationIds[1].toInt()
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
+    setOf(leftList, rightList).forEach { it.sort() }
+
+    part1(sortedLeftList = leftList, sortedRightList = rightList)
+
+    part2(leftList = leftList, rightList = rightList)
+}
+
+fun part1(sortedLeftList: List<Int>, sortedRightList: List<Int>) {
+    var totalDistance = 0
+
+    sortedLeftList.forEachIndexed { index, leftListElement ->
+        totalDistance += (leftListElement - sortedRightList[index]).absoluteValue
     }
 
-    // Test if implementation meets criteria from the description, like:
-    check(part1(listOf("test_input")) == 1)
+    println("Part1 total distance: $totalDistance")
+}
 
-    // Or read a large test input from the `src/Day01_test.txt` file:
-    val testInput = readInput("Day01_test")
-    check(part1(testInput) == 1)
+fun part2(leftList: List<Int>, rightList: List<Int>) {
+    var similarityScore = 0
 
-    // Read the input from the `src/Day01.txt` file.
-    val input = readInput("Day01")
-    part1(input).println()
-    part2(input).println()
+    // Simple solution
+//        sortedLeftList.forEach { leftListElement ->
+//            similarityScore += sortedRightList.count { leftListElement == it } * leftListElement
+//        }
+
+    // A little more complex, optimized solution for the number of calculations, but not for memory
+    val rightListElementWithCounts = rightList.fold(mutableMapOf<Int, Int>()) { acc, i ->
+        acc.apply { acc[i] = acc[i]?.let { it + 1 } ?: 1 }
+    }.toMap()
+    leftList.forEach { similarityScore += it * (rightListElementWithCounts[it] ?: 0) }
+
+    println("Part2 similarity score: $similarityScore")
 }
