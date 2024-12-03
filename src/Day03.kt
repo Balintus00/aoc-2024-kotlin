@@ -24,8 +24,8 @@ private fun getSumOfMultiplicationsInLineTask1(line: String): Int {
     val multiplicationSeparator = ","
 
     val validMultiplicationInstructions = validMultiplicationInstructionRegex.findAll(line)
-        .map { it.value }.toList()
-    validMultiplicationInstructions.map { instruction ->
+        .map { it.value }
+    validMultiplicationInstructions.forEach { instruction ->
         sumOfMultiplicationInstructions += instruction.split(multiplicationSeparator).map {
             it.filter { instructionCharacter -> instructionCharacter.isDigit() }.toInt()
         }.reduce { acc, i -> acc * i }
