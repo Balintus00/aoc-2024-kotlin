@@ -38,7 +38,7 @@ private fun List<String>.getTask1MatchingWordCount(
     var positionalCounter = 0
 
     (-1..1).forEach { verticalStep ->
-        (-1..1).forEach horizontal@{ horizontalStep ->
+        (-1..1).forEach { horizontalStep ->
             if (!(verticalStep == 0 && horizontalStep == 0) && isMatchingSearchedWord(
                     startIndexVertical = startIndexVertical,
                     startIndexHorizontal = startIndexHorizontal,
