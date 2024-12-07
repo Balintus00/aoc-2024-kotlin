@@ -2,34 +2,54 @@ import kotlin.io.path.Path
 import kotlin.io.path.forEachLine
 
 fun main() {
-    val laboratoryMap: MutableList<MutableList<Char>> = mutableListOf()
+    val startingLaboratoryMap: MutableList<MutableList<Char>> = mutableListOf()
 
     Path("src/Day06.txt").forEachLine { line ->
-        laboratoryMap.add(line.toCharArray().toMutableList())
+        startingLaboratoryMap.add(line.toCharArray().toMutableList())
     }
 
     val obstructionMarker = '#'
     val guardVisitedPositionMarker = 'X'
 
-    var isGuardOut = false
+    val laboratoryMapWithGuardMovement = startingLaboratoryMap.deepCopy().apply {
+        simulateGuardMovement(
+            obstructionMarker = obstructionMarker,
+            guardVisitedPositionMarker = guardVisitedPositionMarker,
+        )
+    }
 
-    while (!isGuardOut) {
-        laboratoryMap.getGuardPosition()?.let { guardPosition ->
-            laboratoryMap.step(
-                guardPosition = guardPosition,
-                obstructionMarker = obstructionMarker,
-                guardVisitedPositionMarker = guardVisitedPositionMarker,
-            )
-        } ?: run {
-            isGuardOut = true
+    val guardVisitedPositions = mutableSetOf<Pair<Int, Int>>().apply {
+        laboratoryMapWithGuardMovement.forEachIndexed { rowIndex, row ->
+            row.forEachIndexed { positionIndex, position ->
+                if (position == guardVisitedPositionMarker) add(rowIndex to positionIndex)
+            }
         }
     }
 
-    val guardUniquePositionCount = laboratoryMap.sumOf { row ->
-        row.count { it == guardVisitedPositionMarker }
+    val guardStartingPosition: Pair<Int, Int> = requireNotNull(
+        startingLaboratoryMap.getGuardPosition()
+    ) {
+        "No guard was found on the initial laboratory map!\n" +
+                startingLaboratoryMap.toDebugTextMap()
     }
 
-    println("Task 1 guard distinct position before leaving are: $guardUniquePositionCount")
+    var loopCauserObstructionPositionCounter = 0
+    guardVisitedPositions.forEach {
+        if (
+            it != guardStartingPosition
+            && startingLaboratoryMap.deepCopy().apply {
+                get(it.first)[it.second] = obstructionMarker
+            }.isGuardLooping(obstructionMarker = obstructionMarker)
+        ) {
+            loopCauserObstructionPositionCounter += 1
+        }
+    }
+
+    println("Task 1 guard distinct position before leaving are: ${guardVisitedPositions.size}")
+    println(
+        "Task 2 loop causer obstruction position possibility count: " +
+                "$loopCauserObstructionPositionCounter"
+    )
 }
 
 private fun List<List<Char>>.getGuardPosition(): Pair<Int, Int>? {
@@ -83,6 +103,28 @@ private enum class GuardDirection {
     abstract val nextDirection: GuardDirection
 
     abstract val step: Pair<Int, Int>
+}
+
+private fun List<List<Char>>.deepCopy(): MutableList<MutableList<Char>> = map {
+    it.toMutableList()
+}.toMutableList()
+
+private fun MutableList<MutableList<Char>>.simulateGuardMovement(
+    obstructionMarker: Char,
+    guardVisitedPositionMarker: Char,
+) {
+    var isGuardOut = false
+    while (!isGuardOut) {
+        getGuardPosition()?.let { guardPosition ->
+            step(
+                guardPosition = guardPosition,
+                obstructionMarker = obstructionMarker,
+                guardVisitedPositionMarker = guardVisitedPositionMarker,
+            )
+        } ?: run {
+            isGuardOut = true
+        }
+    }
 }
 
 private fun MutableList<MutableList<Char>>.step(
@@ -139,4 +181,52 @@ private fun List<List<Char>>.getGuardDirection(guardPosition: Pair<Int, Int>): G
 
 private fun List<List<Char>>.toDebugTextMap(): String = fold("") { rowAcc, rowNext ->
     rowAcc + rowNext.fold("") { acc, next -> acc + next } + '\n'
+}
+
+private fun List<List<Char>>.isGuardLooping(obstructionMarker: Char): Boolean {
+    val performedSteps: MutableSet<Pair<Pair<Int, Int>, Pair<Int, Int>>> = mutableSetOf()
+    var guardPosition = getGuardPosition()
+    var guardDirection = guardPosition?.let { getGuardDirection(it) } ?: return false
+
+    while (guardPosition != null) {
+        var isNextStepPerformed = false
+        var currentGuardTurnCounter = 0
+
+        while (!isNextStepPerformed && guardPosition != null && currentGuardTurnCounter < 4) {
+            val nextGuardPositionCandidate = guardPosition.first + guardDirection.step.first to
+                    guardPosition.second + guardDirection.step.second
+            when (
+                getOrNull(nextGuardPositionCandidate.first)?.getOrNull(
+                    nextGuardPositionCandidate.second
+                )
+            ) {
+                null -> {
+                    guardPosition = null
+                }
+
+                obstructionMarker -> {
+                    currentGuardTurnCounter += 1
+                    guardDirection = guardDirection.nextDirection
+                }
+
+                else -> {
+                    val currentPositionChange = guardPosition to nextGuardPositionCandidate
+
+                    if (performedSteps.contains(currentPositionChange)) {
+                        return  true
+                    } else {
+                        performedSteps.add(currentPositionChange)
+                        guardPosition = nextGuardPositionCandidate
+                        isNextStepPerformed = true
+                    }
+                }
+            }
+        }
+
+        if (currentGuardTurnCounter == 4) {
+            return true
+        }
+    }
+
+    return false
 }
