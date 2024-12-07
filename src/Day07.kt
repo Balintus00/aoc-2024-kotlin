@@ -18,14 +18,22 @@ fun main() {
         )
     }
 
-    val solvableEquations = equations.filterSolvableEquations()
+    val task1Operators = listOf<(Long, Long) -> Long>(Long::plus, Long::times)
 
-    println("Task 1 solvable equations' results' sum: ${solvableEquations.sumOf { it.first }}")
+    val solvableEquationsTask1 = equations.filterSolvableEquations(operators = task1Operators)
+
+    val solvableEquationsTask2 = equations.filterSolvableEquations(
+        operators = task1Operators + Long::concatenate,
+    )
+
+    println("Task 1 solvable equations' results' sum: ${solvableEquationsTask1.sumOf { it.first }}")
+    println("Task 2 solvable equations' results' sum: ${solvableEquationsTask2.sumOf { it.first }}")
 }
 
-private fun List<Pair<Long, List<Long>>>.filterSolvableEquations(): List<Pair<Long, List<Long>>> {
+private fun List<Pair<Long, List<Long>>>.filterSolvableEquations(
+    operators: List<(Long, Long) -> Long>,
+): List<Pair<Long, List<Long>>> {
     val solvableEquations = mutableListOf<Pair<Long, List<Long>>>()
-    val operators = listOf<(Long, Long) -> Long>(Long::plus, Long::times)
 
     forEach { solvableEquationCandidate ->
         if (
@@ -75,3 +83,5 @@ private fun isEquationSolvable(
 } != null
 
 private fun Int.pow(n: Int): Long = toFloat().pow(n).roundToLong()
+
+private fun Long.concatenate(other: Long): Long = (toString() + other.toString()).toLong()
