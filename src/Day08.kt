@@ -94,7 +94,7 @@ private fun getAntiNodeLocationsTask2(
                     || positiveDirectionAntiNodeCandidate.second !in secondPositionRange
     }
 
-    var negativeDirectionAntiNodeCandidate = secondAntennaLocation + vector
+    var negativeDirectionAntiNodeCandidate = secondAntennaLocation - vector
     var negativeVectorDirectionOutOfBounds =
         negativeDirectionAntiNodeCandidate.first !in firstPositionRange
                 || negativeDirectionAntiNodeCandidate.second !in secondPositionRange
